@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.*;
 import lombok.extern.slf4j.*;
 import org.springframework.beans.factory.annotation.*;
+import org.springframework.format.annotation.*;
 import org.springframework.http.*;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.*;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.*;
 import java.time.*;
+import java.time.format.*;
 
 
 @Slf4j
@@ -33,16 +36,23 @@ public class EchoController {
   }
 
   // 서버에서 10초마다 모든 구독자에게 broadcast
-  @Scheduled(fixedDelay=10000)
+//  @Scheduled(fixedDelay=10000)
   public void scheduled1() {
     LocalDateTime now = LocalDateTime.now();
     messagingTemplate.convertAndSend("/sub/noti", now);
   }
 
   // 서버에서 매분마다 모든 구독자에게 broadcast
-  @Scheduled(cron = "0 0/1 * 1/1 * ?")
+  //  @Scheduled(cron = "0 0/1 * 1/1 * ?")
   public void scheduled2() {
     messagingTemplate.convertAndSend("/sub/noti", "정각입니다");
+  }
+
+  @Scheduled(fixedDelay=10000)
+  public void scheduled3() {
+    LocalDateTime now = LocalDateTime.now();
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("hh시 mm분 ss초");
+    messagingTemplate.convertAndSend("/sub/noti2", "spring:"+dtf.format(now));
   }
 
   @MessageMapping("/echo3")
@@ -53,12 +63,11 @@ public class EchoController {
   }
 
   @PostMapping("/api/messages")
-  public ResponseEntity<Void> echo4(String receiver, String text, Principal principal) {
+  public ResponseEntity<Void> echo4(@ModelAttribute Message message, Principal principal) {
     String sender = principal==null? "GUEST" : principal.getName();
-    if(receiver.equals(sender))
+    if(message.getReceiver().equals(sender))
       return ResponseEntity.status(409).body(null);
-    System.out.println(receiver);
-    messagingTemplate.convertAndSendToUser(receiver, "/sub/echo4",  sender+" 메시지 전송");
+    messagingTemplate.convertAndSendToUser(message.getReceiver(), "/sub/echo4",  sender+" 메시지 전송");
     return ResponseEntity.ok(null);
   }
 }
