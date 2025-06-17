@@ -36,10 +36,10 @@ public class EchoController {
   }
 
   // 서버에서 10초마다 모든 구독자에게 broadcast
-//  @Scheduled(fixedDelay=10000)
+  @Scheduled(fixedDelay=10000)
   public void scheduled1() {
     LocalDateTime now = LocalDateTime.now();
-    messagingTemplate.convertAndSend("/sub/noti", now);
+    messagingTemplate.convertAndSend("/sub/job1", now);
   }
 
   // 서버에서 매분마다 모든 구독자에게 broadcast
